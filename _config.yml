@@ -10,14 +10,20 @@ search: true
 minimal_mistakes_skin: contrast
 remote_theme: "mmistakes/minimal-mistakes@4.24.0"
 
+# Outputting
+permalink: /:year/:month/:title/
+paginate: 5 # amount of posts to show
+paginate_path: /page:num/
+timezone: Europe/Madrid
+
+include:
+  - _pages
+
 author:
   name   : "Josu Alonso"
   avatar : "/images/bio-photo.jpeg"
   bio    : "Data Scientist & Analyst"
   links:
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/josumsc"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/josumsc"
@@ -27,9 +33,9 @@ author:
 
 footer:
   links:
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/josumsc"
+    - label: "Linkedin"
+      icon: "fab fa-fw fa-linkedin"
+      url: "https://www.linkedin.com/in/josu-alonso-castanedo/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/josumsc"
@@ -42,3 +48,28 @@ plugins:
   - jemoji
   - jekyll-include-cache
   
+  defaults:
+  # _posts
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: true
+      share: true
+      related: true
+  # _pages
+  - scope:
+      path: "_pages"
+      type: pages
+    values:
+      layout: single
+      author_profile: true
+  - scope:
+      path: "images/"
+    values:
+      image: true
+
+repository: "josumsc/josumsc.github.io"
