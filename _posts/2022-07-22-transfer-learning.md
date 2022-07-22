@@ -24,8 +24,6 @@ On that process, a [cycle of underfitting and overfitting](https://towardsdatasc
 
 ![Overfitting while training](/images/transfer-learning-02.png){:.align-center}
 
-Técnicas diversas como el [Dropout]() o la regularización de los pesos mediante [L2]() puede ayudarnos a solucionar el problema de overfitting, mientras que el aumento de complejidad de los modelos mediante el stacking de más capas en nuestras redes o la elección de un mayor número de unidades por capa puede ayudarnos con el underfitting.
-
 Regularization techniques such as [Dropout](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/) or [L2 regularization](https://neptune.ai/blog/fighting-overfitting-with-l1-or-l2-regularization) can help us solve the problem of overfitting, as they penalize the complexity of the model. The implementation of these methods is often recommended above the restriction of units per layer or the number of layers, as they are prepared to let those important parameters to compensate for the loss added to the model.
 
 Nevertheless, no matter how many regularization we use we eventually end up facing a barrier that we cannot overcome: The scarce volume of data we have. Even if we try to help our models, they only learn what is present in the training set, and if the training set is small or its diversity is not enough our models will eventually fail. In the end, they need to reduce a certain metric as much as possible, and they will adapt to the data whenever possible, so either we make them adapt too much (overfitting) to reduce the training loss, or too little (underfitting) to reduce the discrepancy between the training and validation losses.
