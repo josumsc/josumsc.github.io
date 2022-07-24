@@ -6,6 +6,8 @@ categories:
   - deep learning
   - transfer learning
   - computer vision
+  - python
+  - tensorflow
 permalink: /transfer-learning/
 classes: wide
 excerpt: Guide to achieve state of the art performance on a wide range of tasks with little to no training.
