@@ -31,7 +31,6 @@ In order to make these predictions and approximate the users preferences success
 1. **Explicit Collaborative Filtering**, which are the most common models, and the ones that are ancient and proven by the research community. To apply them we need an abundance of explicit scores on the user/item combinations, such a rating from 1 to 5 stars or a good/bad review.
 2. **Implicit Collaborative Filtering**, which are models trained without any explicit score at a user/item level. To apply them we use the signals left by the user on our sites, such as the item page views, the add-to-cart events or the purchases of the user.
 
-
 ## Explicit Collaborative Filtering
 
 > For an example of Explicit Collaborative Filtering please check this repository: [MovieLens Recommender](https://github.com/josumsc/movielens-recommender)
@@ -189,7 +188,7 @@ class SeqRecommender(nn.Module):
         return rating_scores
 ```
 
-Regarding the trainig of our model, we may again see that the code is quite similar:
+Regarding the training of our model, we may again see that the code is quite similar:
 
 ```python
 n_units_lstm = 30
