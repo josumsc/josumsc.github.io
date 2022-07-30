@@ -1,13 +1,13 @@
 ---
 title: "Explicit and Implicit Collaborative Filtering"
-date: 2022-08-01T00:00-00:00
+date: 2022-07-30T00:00-00:00
 last_modified_at:
 categories:
   - python
   - deep learning
   - pytorch
   - recommender system
-  - ecommerce
+  - e-commerce
 permalink: /collaborative-filtering/
 classes: wide
 excerpt: How can we get to the best recommendation possible when little to no reviews are available?
