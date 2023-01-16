@@ -1,12 +1,8 @@
 github_users:
-  - torvalds
-  - alshedivat
+  - josumsc
 
 github_repos:
-  - alshedivat/al-folio
-  - twbs/bootstrap
-  - jekyll/jekyll
-  - jquery/jquery
-  - FortAwesome/Font-Awesome
-  - jpswalsh/academicons
-  - mathjax/MathJax
+  - josumsc/twitter-sentiment-analysis
+  - josumsc/credit-card-fraud-detection
+  - josumsc/movielens-recommender
+  - josumsc/daily-climate-ts
