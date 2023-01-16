@@ -2,96 +2,131 @@
   type: map
   contents:
     - name: Full Name
-      value: Albert Einstein
+      value: Josu Alonso Castanedo
     - name: Date of Birth
-      value: 14th March 1879
+      value: 13th December 1993
     - name: Languages
-      value: English, German
+      value: Spanish, English, French
 
 - title: Education
   type: time_table
   contents:
-    - title: PhD
-      institution: University of Zurich, Zurich, Switzerland
-      year: 1905
+    - title: Master in Data Science
+      institution: Open University of Catalonia, Barcelona, Spain
+      year: 2020-2022
       description:
-        - Description 1.
-        - Description 2.
-        - title: Description 3.
-          contents:
-            - Sub-description 1.
-            - Sub-description 2.
-    - title: Federal teaching diploma
-      institution: Eidgenössische Technische Hochschule, Zurich, Switzerland
-      year: 1900
+        - Specialized in Machine Learning and Deep Learning.
+        - Top 150 between youngest universities (Times Higher Education).
+    - title: IBBA in International Finance
+      institution: Kedge Business School, Marseille, France
+      year: 2015-2018
       description:
-        - Description 1.
-        - Description 2.
+        - Specialized in Financial Analysis and Econometrics.
+        - Classified one of the 40 best Business Schools in Europe (Financial Times).
+    - title: Double Degree Program in International Business
+      institution: Universitat de Valencia, Valencia, Spain
+      year: 2013-2018
+      description:
+        - Joint Degree Program with KEDGE BS.
+        - 3rd best Economic and Management faculty in Spain (Ranking Shangai).
 
 - title: Experience
   type: time_table
   contents:
-    - title: Professor of Theoretical Physics
-      institution: Institute for Advanced Study, Princeton University
-      year: 1933 - 1955
+    - title: Data Scientist
+      institution: <a href="https://www.promofarma.com/">Promofarma</a>, Barcelona, Spain
+      year: 2022-now
       description:
-        - Description 1.
-        - Description 2.
-        - title: Description 3.
+        - Development and maintenance of Machine Learning models to use company data in order to increase profits and enrich the user experience.
+        - Implementation of said models in production using Airflow, AWS, Docker and PyTorch among others.
+        - title: Projects
           contents:
-            - Sub-description 1.
-            - Sub-description 2.
-    - title: Visiting Professor
-      institution: California Institute of Technology, Pasadena, California, US
-      year: 1933
+          - <em>"Development of a NLP model to perform semantic search and increase findability and conversion rates."</em>
+          - <em>"Reduction of credit card fraud by up to 90% thanks to the implementation of a machine learning model."</em>
+    - title: Data Analyst
+      institution: <a href="https://www.promofarma.com/">Promofarma</a>, Barcelona, Spain
+      year: 2020-2022
       description:
-        - Description 1.
-        - Description 2.
-
-    - title: Director
-      institution: Kaiser Wilhelm Institute for Physics, Berlin, Germany.
-      year: 1917-1933
-
-    - title: Professor of Theoretical Physics
-      institution: Karl-Ferdinand University, Prague, Czechoslovakia
-      year: 1911 - 1917
+        - Business Intelligence Design and Development using Qlik Sense.
+        - Automation of day-to-day reports using Airflow and Streamlit among others.
+        - title: Projects
+          contents:
+          - <em>"Increase speed of AB testing company wide by creating a front-end tool to check statistical significance."</em>
+          - <em>"Behavioural clusterization of customers to increase MKT efficiency and reduce churn."</em>
+    - title: Finance Analyst
+      institution: <a href="https://mediaadgo.com">Media Adgo</a>, Barcelona, Spain.
+      year: 2018-2022
       description:
+        - Development of reports using the business and financial data of the company.
+        - Responsible for the financial procedures on both Spanish and French markets.
+        - title: Projects
+          contents:
+          - <em>Increased the efficiency of MKT teams by developing dashboards with the most profitable campaigns.</em>
+          - <em>Increased speed of the accounting clousure by up to 30% by automating the process.</em>
+    - title: Income Auditor Trainee
+      institution: <a href="https://www.dolce.com/">Dolce Hotels & Resorts</a>, Brussels, belgium
+      year: 2017
+      description:
+        - "Ensure a proper treatment of the financial data."
+        - "Elaborate management reports: payment methods, cash available, refunds, ..."
 
-    - title: Associate Professor of Theoretical Physics
-      institution: University of Zurich, Zurich, Switzerland
-      year: 1909 - 1911
-
-- title: Open Source Projects
-  type: time_table
-  contents:
-    - title: <a href="https://github.com/alshedivat/al-folio">al-folio</a>
-      year: 2015-now
-      description: A beautiful, simple, clean, and responsive Jekyll theme for academics.
-
-- title: Honors and Awards
-  type: time_table
-  contents:
-    - year: 1921
-      items: 
-        - Nobel Prize in Physics 
-        - Matteucci Medal
-    - year: 2029
-      items: 
-        - Max Planck Medal
-
-- title: Academic Interests
+- title: Skills & Tools
   type: nested_list
   contents:
-    - title: Topic 1.
-      items: 
-        - Description 1.
-        - Description 2.
-    - title: Topic 2.
+    - title: Programming Languages and Frameworks
       items:
-        - Description 1.
-        - Description 2.
+        - "Python"
+        - "SQL"
+        - "Airflow"
+        - "Docker"
+        - "FastAPI"
+        - "PyTorch"
+        - "Tensorflow"
+        - "Scikit-Learn"
+        - "Spacy"
+        - "Pandas"
+    - title: Data Concepts
+      items:
+        - "Natural Language Processing"
+        - "Recommender Systems"
+        - "Fraud Detection"
+        - "Time Series Analysis"
+        - "Clustering"
+    - title: Data Visualization
+      items:
+        - "Tableau"
+        - "Qlik Sense"
+        - "Streamlit"
+        - "Dash"
+    - title: Other
+      items:
+        - "Git"
+        - "AWS"
+        - "CI/CD"
+        - "Linux"
+        - "Google Data Studio"
 
-- title: Other Interests
-  type: list
+- title: Certifications & Courses
+  type: time_table
   contents:
-    - <u>Hobbies:</u> Hobby 1, Hobby 2, etc.
+    - title: Search with Machine Learning
+      institution: <a href="https://corise.com/course/search-with-machine-learning">CoRise</a>, Online
+      year: 2022
+      description: 1 month program based on using Machine Learning and ElasticSearch modules to improve search relevance and efficiency.
+    - title: Natural Language Processing Specialization
+      institution: <a href="https://www.deeplearning.ai/courses/natural-language-processing-specialization/">DeepLearning.ai</a>, Online
+      year: 2022
+      description: 4 courses specialization focused on extracting the most out of text data.
+    - title: Tensorflow Developer Professional Certificate
+      institution: <a href="https://www.coursera.org/professional-certificates/tensorflow-in-practice">Coursera</a>, Online
+      year: 2022
+      description: 4 courses specialization by AI Advocates in Google aimed at developing production-ready models using TensorFlow.
+    - title: Deep Learning Specialization
+      institution: <a href="https://www.deeplearning.ai/courses/deep-learning-specialization/">DeepLearning.ai</a>, Online
+      year: 2021
+      description: 5 courses specialization focused on Deep Learning, often mentioned as the best course to take in Deep Learning.
+    - title: Machine Learning Certificate
+      institution: <a href="https://www.coursera.org/learn/machine-learning">Stanford University</a>, Online
+      year: 2021
+      description: Foundational course on Machine Learning with mathematical concepts thoroughly explained.
+
