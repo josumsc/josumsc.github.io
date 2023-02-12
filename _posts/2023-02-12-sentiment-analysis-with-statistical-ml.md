@@ -4,7 +4,7 @@ title: "Sentiment Analysis with Statistical Methods"
 date: 2023-02-12 00:00:00-0100
 description: "Using statistical methods to perform sentiment analysis on a dataset of reviews might be simpler than you think."
 tags: 
-  - sentiment analysis
+  - nlp
   - python
 giscus_comments: true
 ---
