@@ -145,6 +145,7 @@ log_model.fit(X_train, y_train)
 As a second traditional method, we select [Naive Bayes](https://en.wikipedia.org/wiki/Naive_Bayes_classifier). This method is based on the conditional probability of an example to belong to a certain class given the probabilities of each of the tokens, which will be summarized in what's called *loglikelihoods*. To calculate this probability, we will be using the same frequency table that we calculated for the Logistic Regression:
 
 $$ P(W_{pos}) = \frac{freq_{pos} + 1}{N_{pos} + V} $$
+
 $$ P(W_{neg}) = \frac{freq_{neg} + 1}{N_{neg} + V} $$
 
 $$\text{loglikelihood} = \log \left(\frac{P(W_{pos})}{P(W_{neg})} \right)$$
