@@ -1,0 +1,478 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title>Fine-tuning HuggingFace Transformers for Text Classification | Josu Alonso Castanedo</title> <meta name="author" content="Josu Alonso Castanedo"> <meta name="description" content="Creating your own text classification API using HuggingFace Transformers and Flask"> <meta name="keywords" content="machine-learning, data-science, ai"> <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-DF7Zhf293AJxJNTmh5zhoYYIMs2oXitRfBjY+9L//AY=" crossorigin="anonymous"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.1/css/academicons.min.css" integrity="sha256-i1+4qU2G2860dGGIOJscdC30s9beBXjFfzjWLjBRsBg=" crossorigin="anonymous"> <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700%7CRoboto+Slab:100,300,400,500,700%7CMaterial+Icons"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/github.css" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.ico"> <link rel="stylesheet" href="/assets/css/main.css"> <link rel="canonical" href="https://josumsc.github.io/blog/2023/fine-tuning-huggingface/"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/native.css" media="none" id="highlight_theme_dark"> <script src="/assets/js/theme.js"></script> <script src="/assets/js/dark_mode.js"></script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"><span class="font-weight-bold">Josu </span>Alonso Castanedo</a> <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse text-right" id="navbarNav"> <ul class="navbar-nav ml-auto flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">About</a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">Blog<span class="sr-only">(current)</span></a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">Repositories</a> </li> <li class="nav-item "> <a class="nav-link" href="/cv/">CV</a> </li> <li class="toggle-container"> <button id="light-toggle" title="Change theme"> <i class="fas fa-moon"></i> <i class="fas fa-sun"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5"> <div class="post"> <header class="post-header"> <h1 class="post-title">Fine-tuning HuggingFace Transformers for Text Classification</h1> <p class="post-meta">March 5, 2023</p> <p class="post-tags"> <a href="/blog/2023"> <i class="fas fa-calendar fa-sm"></i> 2023 </a>   ·   <a href="/blog/tag/nlp"> <i class="fas fa-hashtag fa-sm"></i> nlp</a>   <a href="/blog/tag/python"> <i class="fas fa-hashtag fa-sm"></i> python</a>   <a href="/blog/tag/mlops"> <i class="fas fa-hashtag fa-sm"></i> mlops</a>   <a href="/blog/tag/pytorch"> <i class="fas fa-hashtag fa-sm"></i> pytorch</a>   <a href="/blog/tag/deep-learning"> <i class="fas fa-hashtag fa-sm"></i> deep learning</a>   </p> </header> <article class="post-content"> <figure> <picture> <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo-with-title-480.webp"></source> <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo-with-title-800.webp"></source> <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo-with-title-1400.webp"></source> <img src="https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo-with-title.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"> </picture> </figure> <blockquote> <p>The full implementation of the project described in this post can be found on <a href="https://github.com/josumsc/fake-news-detector" rel="external nofollow noopener" target="_blank">GitHub</a></p> </blockquote> <p>As <a href="https://www.technologyreview.com/2023/02/16/1068695/chatgpt-chatbot-battle-search-microsoft-bing-google/" rel="external nofollow noopener" target="_blank">Bing and Google fight for delivering the best AI based search solution</a>, Large Language Models popularity keeps increasing. We, mere mortals far from the computing and data repositories available to the big tech companies, can also take advantage of these models to solve our own problems. In this post, we will see how to fine-tune a HuggingFace Transformer model to leverage the work of those giants and create our own text classification model, with SOTA results.</p> <p>Furthermore, we will use Flask to create an API that serves our model predictions, and implement MLOps best practices to deploy our model in production and ensure a CD flow.</p> <h2 id="fine-tuning-the-model">Fine-Tuning the Model</h2> <h3 id="the-transformers-ecosystem">The Transformers ecosystem</h3> <p>HuggingFace is the go-to company for Natural Language Processing (NLP) tasks. They have a wide range of models, datasets, and tools to help you solve your NLP problems. They also have a great community that is always willing to help. They started their journey with the <a href="https://huggingface.co/docs/transformers/index" rel="external nofollow noopener" target="_blank">Transformers library</a> but nowadays they also provide a <a href="https://huggingface.co/models" rel="external nofollow noopener" target="_blank">Hub to download pretrained models and tokenizers</a>, a <a href="https://huggingface.co/datasets" rel="external nofollow noopener" target="_blank">Datasets library</a> to download and process datasets, and <a href="https://huggingface.co/spaces" rel="external nofollow noopener" target="_blank">access to spaces to train your model on them and show demos of their capabilities</a>.</p> <p>In this post, we will use the <code class="language-plaintext highlighter-rouge">datasets</code> library to download a dataset that fits our needs, the <code class="language-plaintext highlighter-rouge">transformers</code> library to download a pretrained LLM, and the Hub to upload our model and tokenizer to be able to use them in our API.</p> <p>To work with the HuggingFace ecosystem and combine it with PyTorch, we have defined a <code class="language-plaintext highlighter-rouge">DetectorPipeline</code> class that will serve as an interface to interact with our model pipeline:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DetectorPipeline</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"GonzaloA/fake_news"</span><span class="p">,</span>
+        <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"distilbert-base-uncased-finetuned-sst-2-english"</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"fake_news_detector"</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="s">"""Detector pipeline class.
+
+        :param dataset_name: Name of the dataset to download, defaults to "GonzaloA/fake_news"
+        :type dataset_name: str, optional
+        :param checkpoint: Name of the model to fine-tune, defaults to "distilbert-base-uncased-finetuned-sst-2-english"
+        :type checkpoint: str, optional
+        :param model_name: Name of the model to save, defaults to "fake_news_detector"
+        :type model_name: str, optional
+        """</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="n">dataset_name</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">checkpoint</span> <span class="o">=</span> <span class="n">checkpoint</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+</code></pre></div></div> <p>The functions shown later on this part of the post will be defined as methods of this class.</p> <h3 id="the-dataset">The Dataset</h3> <p>We will use the <a href="https://huggingface.co/datasets/GonzaloA/fake_news" rel="external nofollow noopener" target="_blank">Fake News Dataset</a> that includes approximately 40k news articles with their header and corpus labeled as either fake or real. The dataset is already split into train, validation, and test sets, so we can download it directly from the Hub with those splits already specified.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">download_dataset</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datasets</span><span class="p">.</span><span class="n">DatasetDict</span><span class="p">:</span>
+    <span class="s">"""Download dataset from HuggingFace datasets library.
+
+    :return: DatasetDict object with the train, validation and test splits.
+    :rtype: datasets.DatasetDict
+    """</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">.</span><span class="nf">load_dataset</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+</code></pre></div></div> <h3 id="the-model">The Model</h3> <p>With the dataset on memory, the next step would be to download the model. In this case, we will be using the <code class="language-plaintext highlighter-rouge">distilbert-base-uncased-finetuned-sst-2-english</code> model, which is a fine-tuned version of the <code class="language-plaintext highlighter-rouge">distilbert-base-uncased</code> model for the SST-2 dataset. The SST-2 dataset is a binary classification dataset with the goal of predicting whether a sentence is positive or negative. The model was trained on the SST-2 dataset and then fine-tuned on the <code class="language-plaintext highlighter-rouge">fake_news</code> dataset.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_tokenizer_and_model</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">]:</span>
+    <span class="s">"""Get tokenizer and model from model name.
+
+    :param checkpoint: Name of the model to fine-tune, defaults to None
+    :type checkpoint: str, optional
+    :return: Tokenizer and Model objects.
+    :rtype: (AutoTokenizer, AutoModelForSequenceClassification)
+    """</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="n">checkpoint</span> <span class="k">if</span> <span class="n">checkpoint</span> <span class="k">else</span> <span class="n">self</span><span class="p">.</span><span class="n">checkpoint</span>
+    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span>
+        <span class="n">model_name</span><span class="p">,</span> <span class="n">num_labels</span><span class="o">=</span><span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span>
+</code></pre></div></div> <h3 id="the-dataloaders">The DataLoaders</h3> <p>Text datasets can be huge, and even though we were able to load them in memory it doesn’t mean that we will be able to load them into our GPU all at once, given that our model and logits also have to coexist on that instance. To solve this problem, we will use PyTorch’s <code class="language-plaintext highlighter-rouge">DataLoader</code> class to load the data in batches, passing the text by the tokenizer first to receive them as integers.</p> <p>But first, we need to define a <a href="https://huggingface.co/docs/transformers/main_classes/data_collator" rel="external nofollow noopener" target="_blank">DataCollator</a> that will be in charge of padding the sequences to the same length, which in this case will be the longer sequence. We will use the <code class="language-plaintext highlighter-rouge">DataCollatorWithPadding</code> class for this task.</p> <p>Also, please note that some preprocessing is done on the dataset to remove the string columns after the tokenization process and to rename the target column to <code class="language-plaintext highlighter-rouge">labels</code> to match the model’s expected input.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_data_collator</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">:</span> <span class="n">AutoTokenizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataCollatorWithPadding</span><span class="p">:</span>
+    <span class="s">"""Get data collator from tokenizer.
+
+    :param tokenizer: Tokenizer object.
+    :type tokenizer: AutoTokenizer
+    :return: Data collator object.
+    :rtype: DataCollatorWithPadding
+    """</span>
+
+    <span class="n">data_collator</span> <span class="o">=</span> <span class="nc">DataCollatorWithPadding</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data_collator</span>
+
+<span class="k">def</span> <span class="nf">get_dataloaders</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">datasets</span><span class="p">.</span><span class="n">DatasetDict</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">AutoTokenizer</span><span class="p">,</span>
+    <span class="n">data_collator</span><span class="p">:</span> <span class="n">DataCollatorWithPadding</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
+    <span class="s">"""Get the dataloaders for train, validation and test splits.
+
+    :param dataset: Train dataset.
+    :type dataset: datasets.DatasetDict
+    :param batch_size: Batch size.
+    :type batch_size: int
+    :param tokenizer: Tokenizer object.
+    :type DataLoader: AutoTokenizer
+    :param data_collator: Data collator object.
+    :type data_collator: DataCollatorWithPadding
+    :return: Dataloaders for train, validation and test splits.
+    :rtype: (DataLoader, DataLoader, DataLoader)
+    """</span>
+
+    <span class="c1"># Tokenize dataset
+</span>    <span class="k">def</span> <span class="nf">tokenize_function</span><span class="p">(</span><span class="n">example</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nf">tokenizer</span><span class="p">(</span><span class="n">example</span><span class="p">[</span><span class="s">"text"</span><span class="p">],</span> <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">tokenized_dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="n">tokenize_function</span><span class="p">,</span> <span class="n">batched</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="c1"># Put in format that the model expects
+</span>    <span class="n">tokenized_dataset</span> <span class="o">=</span> <span class="n">tokenized_dataset</span><span class="p">.</span><span class="nf">remove_columns</span><span class="p">(</span>
+        <span class="p">[</span><span class="s">"Unnamed: 0"</span><span class="p">,</span> <span class="s">"title"</span><span class="p">,</span> <span class="s">"text"</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">tokenized_dataset</span> <span class="o">=</span> <span class="n">tokenized_dataset</span><span class="p">.</span><span class="nf">rename_column</span><span class="p">(</span><span class="s">"label"</span><span class="p">,</span> <span class="s">"labels"</span><span class="p">)</span>
+    <span class="n">tokenized_dataset</span><span class="p">.</span><span class="nf">set_format</span><span class="p">(</span><span class="s">"torch"</span><span class="p">)</span>
+
+    <span class="c1"># Create dataloaders
+</span>    <span class="n">train_dataloader</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
+        <span class="n">tokenized_dataset</span><span class="p">[</span><span class="s">"train"</span><span class="p">],</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">data_collator</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">eval_dataloader</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
+        <span class="n">tokenized_dataset</span><span class="p">[</span><span class="s">"validation"</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">collate_fn</span><span class="o">=</span><span class="n">data_collator</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">test_dataloader</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
+        <span class="n">tokenized_dataset</span><span class="p">[</span><span class="s">"test"</span><span class="p">],</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">collate_fn</span><span class="o">=</span><span class="n">data_collator</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">test_dataloader</span>
+</code></pre></div></div> <h3 id="the-trainer">The Trainer</h3> <p>Once we have the dataset, the model, and the dataloaders, we can start training the model. To do this, we will use PyTorch interfaces to define the training loop and the evaluation loop:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">,</span>
+    <span class="n">train_dataloader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-5</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">warmup_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_grad_norm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">:</span>
+    <span class="s">"""Train model.
+
+    :param model: Model to train.
+    :type model: AutoModelForSequenceClassification
+    :param train_dataloader: Dataloader with train data.
+    :type train_dataloader: DataLoader
+    :param epochs: Number of epochs to train, defaults to 3
+    :type epochs: int, optional
+    :param lr: Learning rate, defaults to 2e-5
+    :type lr: float, optional
+    :param weight_decay: Weight decay, defaults to 0.0
+    :type weight_decay: float, optional
+    :param warmup_steps: Number of warmup steps, defaults to 0
+    :type warmup_steps: int, optional
+    :param max_grad_norm: Maximum gradient norm, defaults to 1.0
+    :type max_grad_norm: float, optional
+    :return: Trained model.
+    :rtype: AutoModelForSequenceClassification
+    """</span>
+
+    <span class="n">num_training_steps</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">)</span> <span class="o">*</span> <span class="n">epochs</span>
+
+    <span class="c1"># Set device
+</span>    <span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">if</span> <span class="n">torch</span><span class="p">.</span><span class="n">cuda</span><span class="p">.</span><span class="nf">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cpu"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Set optimizer
+</span>    <span class="n">optimizer</span> <span class="o">=</span> <span class="nc">AdamW</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">weight_decay</span><span class="p">)</span>
+
+    <span class="c1"># Set scheduler
+</span>    <span class="n">scheduler</span> <span class="o">=</span> <span class="nf">get_scheduler</span><span class="p">(</span>
+        <span class="s">"linear"</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">num_warmup_steps</span><span class="o">=</span><span class="n">warmup_steps</span><span class="p">,</span>
+        <span class="n">num_training_steps</span><span class="o">=</span><span class="n">num_training_steps</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Train
+</span>    <span class="n">pbar</span> <span class="o">=</span> <span class="nf">tqdm</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="n">num_training_steps</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nf">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">num_training_steps</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">train_dataloader</span><span class="p">:</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">.</span><span class="nf">items</span><span class="p">()}</span>
+                <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">.</span><span class="n">loss</span>
+                <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
+                <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="nf">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">max_grad_norm</span><span class="p">)</span>
+                <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+                <span class="n">scheduler</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
+                <span class="n">pbar</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span>
+
+<span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">datasets</span><span class="p">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">dataloader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="s">"""Evaluate model.
+
+    :param eval_dataloader: dataset to evaluate.
+    :type eval_dataloader: DatasetDict
+    :param dataset: Dataloader with eval data.
+    :type dataset: DataLoader
+    :param model: Model to evaluate.
+    :type model: AutoModelForSequenceClassification
+    :return: Accuracy.
+    :rtype: float
+    """</span>
+
+    <span class="c1"># Set device
+</span>    <span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">if</span> <span class="n">torch</span><span class="p">.</span><span class="n">cuda</span><span class="p">.</span><span class="nf">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cpu"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Evaluate
+</span>    <span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">.</span><span class="nf">items</span><span class="p">()}</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">.</span><span class="n">logits</span>
+        <span class="n">running_predictions</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="s">"cpu"</span><span class="p">).</span><span class="nf">numpy</span><span class="p">().</span><span class="nf">tolist</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">predictions</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">running_predictions</span><span class="p">)</span>
+
+    <span class="c1"># Print results
+</span>    <span class="nf">print</span><span class="p">(</span><span class="s">"Results of the model:</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+    <span class="n">f1score</span> <span class="o">=</span> <span class="nf">f1_score</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s">"validation"</span><span class="p">][</span><span class="s">"label"</span><span class="p">],</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s">"macro"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"F1 score: </span><span class="si">{</span><span class="n">f1score</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="nf">classification_report</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s">"validation"</span><span class="p">][</span><span class="s">"label"</span><span class="p">],</span> <span class="n">predictions</span><span class="p">))</span>
+    <span class="nf">print</span><span class="p">(</span><span class="nf">confusion_matrix</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s">"validation"</span><span class="p">][</span><span class="s">"label"</span><span class="p">],</span> <span class="n">predictions</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">f1score</span>
+</code></pre></div></div> <h3 id="putting-everything-together">Putting everything together</h3> <p>So far we have the different methods that should be called from the pipeline, although we still lack the pipeline itself. The pipeline will be the one that will call the different methods:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">train_pipeline</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-5</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">:</span>
+    <span class="s">"""Runs the train pipeline and returns the trained model.
+    :param epochs: Number of epochs to train, defaults to 3
+    :type epochs: int, optional
+    :param lr: Learning rate, defaults to 2e-5
+    :type lr: float, optional
+    :param batch_size: Batch size, defaults to 16
+    :type batch_size: int, optional
+    :return: Trained model.
+    :rtype: AutoModelForSequenceClassification
+    """</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">download_dataset</span><span class="p">()</span>
+    <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_tokenizer_and_model</span><span class="p">()</span>
+    <span class="n">data_collator</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_data_collator</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
+    <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_dataloaders</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+        <span class="n">data_collator</span><span class="o">=</span><span class="n">data_collator</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">self</span><span class="p">.</span><span class="nf">evaluate_model</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">.</span><span class="nf">save_pretrained</span><span class="p">(</span><span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s">"models"</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model_name</span><span class="p">))</span>
+    <span class="n">tokenizer</span><span class="p">.</span><span class="nf">save_pretrained</span><span class="p">(</span><span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s">"models"</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model_name</span><span class="p">))</span>
+
+    <span class="k">return</span>
+</code></pre></div></div> <p>Notice how the pipeline ends by calling the <code class="language-plaintext highlighter-rouge">save_pretrained</code> method of the model and tokenizer. This will save the model and tokenizer in the <code class="language-plaintext highlighter-rouge">models</code> directory with the name defined in the class instantiation, so that we can use them later.</p> <p>After training, we will need to be able to predict the results of a given text. For this procedure, we will need to load the model and tokenizer that we have previously saved and create a <code class="language-plaintext highlighter-rouge">predict</code> function:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">load_model_from_directory</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">]:</span>
+    <span class="s">"""Load model from directory.
+
+    :param model_name: Name of the model to load, if None, self.model_name is used, defaults to None.
+    :type model_name: str
+    :return: Loaded tokenizer and model.
+    :rtype: (AutoTokenizer, AutoModelForSequenceClassification
+    """</span>
+    <span class="n">load_path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s">"models"</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_name</span>
+        <span class="k">else</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s">"models"</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="n">load_path</span><span class="p">,</span> <span class="n">local_files_only</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span>
+        <span class="n">load_path</span><span class="p">,</span> <span class="n">local_files_only</span><span class="o">=</span><span class="bp">True</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span>
+
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span>
+    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">AutoTokenizer</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">AutoModelForSequenceClassification</span><span class="p">,</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="s">"""Predict class of text.
+
+    :param tokenizer: Tokenizer to use for prediction.
+    :type tokenizer: AutoTokenizer
+    :param model: Model to use for prediction.
+    :type model: AutoModelForSequenceClassification
+    :param text: Text to predict.
+    :type text: str
+    :return: Predicted class.
+    :rtype: int
+    """</span>
+    <span class="c1"># Set device
+</span>    <span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cuda"</span><span class="p">)</span> <span class="k">if</span> <span class="n">torch</span><span class="p">.</span><span class="n">cuda</span><span class="p">.</span><span class="nf">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">torch</span><span class="p">.</span><span class="nf">device</span><span class="p">(</span><span class="s">"cpu"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Predict
+</span>    <span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+    <span class="n">encoded_text</span> <span class="o">=</span> <span class="nf">tokenizer</span><span class="p">(</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">truncation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span>
+    <span class="p">)</span>
+    <span class="n">encoded_text</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">encoded_text</span><span class="p">.</span><span class="nf">items</span><span class="p">()}</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="o">**</span><span class="n">encoded_text</span><span class="p">)</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">.</span><span class="n">logits</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="s">"cpu"</span><span class="p">).</span><span class="nf">numpy</span><span class="p">().</span><span class="nf">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">logits</span>
+</code></pre></div></div> <p>Finally, once we have the model and tokenizer loaded, we can publish them into HuggingFace Hub. For this, we will need to create another function in our pipeline:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">publish_model_from_directory</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="s">"""Publish model to Hugging Face Hub from the specified directory.
+    Both the model in the directory and the model on the Hub must have the same name.
+    :param model_name: Name of the model to publish, if None, self.model_name is used, defaults to None.
+    :type model_name: str
+    :return: None
+    :rtype: None
+    """</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span> <span class="k">if</span> <span class="n">model_name</span> <span class="k">else</span> <span class="n">self</span><span class="p">.</span><span class="n">model_name</span>
+    <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">load_model_from_directory</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="n">tokenizer</span><span class="p">.</span><span class="nf">push_to_hub</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">.</span><span class="nf">push_to_hub</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">None</span>
+</code></pre></div></div> <p>We have to consider that in order to publish models to the Hub we need to be logged in. For this, we can use the <code class="language-plaintext highlighter-rouge">huggingface-cli login</code> command (more info to be found in <a href="https://huggingface.co/docs/huggingface_hub/quick-start#login" rel="external nofollow noopener" target="_blank">their documentation</a>).</p> <h2 id="creating-a-cli-to-interact-with-the-model">Creating a CLI to interact with the model</h2> <p>Even though we have simplified the process of loading, training and predicting using our pipeline, we would still need to import the class and call the different methods every time we would want to use it. For this reason, we will create a CLI that will allow us to interact with the model without having to write any unnecessary code, increasing our efficiency and avoiding errors.</p> <p>We will be using the <code class="language-plaintext highlighter-rouge">click</code> library to create the CLI. The first step is to create a <code class="language-plaintext highlighter-rouge">cli.py</code> file that will contain the CLI:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Description: Command line interface for the fake news detector.
+</span><span class="kn">import</span> <span class="n">click</span>
+
+
+<span class="nd">@click.group</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">cli</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="nf">cli</span><span class="p">()</span> 
+</code></pre></div></div> <p>This will create the command line, but for now we have nothing to do with it. We need to add the different methods to the CLI by using the <code class="language-plaintext highlighter-rouge">@click.command()</code> decorator and the <code class="language-plaintext highlighter-rouge">cli.add_command()</code> method. We will start by adding the <code class="language-plaintext highlighter-rouge">train</code> command:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">detector</span> <span class="kn">import</span> <span class="n">DetectorPipeline</span>
+
+<span class="nd">@click.command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">"train"</span><span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span>
+    <span class="s">"--dataset"</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s">"GonzaloA/fake_news"</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s">"Dataset to download from HuggingFace datasets library."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span>
+    <span class="s">"--checkpoint"</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s">"distilbert-base-uncased-finetuned-sst-2-english"</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s">"Model to fine-tune."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span>
+    <span class="s">"--output"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">"fake-news-detector"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Name of the model to save."</span>
+<span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span><span class="s">"--lr"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">2e-5</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Learning rate."</span><span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span><span class="s">"--batch_size"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Batch size."</span><span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span><span class="s">"--epochs"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Number of epochs."</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">):</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="nc">DetectorPipeline</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">checkpoint</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="n">output</span>
+    <span class="p">)</span>
+    <span class="n">pipeline</span><span class="p">.</span><span class="nf">train_pipeline</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="n">click</span><span class="p">.</span><span class="nf">echo</span><span class="p">(</span><span class="sa">f</span><span class="s">"Model saved into directory ./models/</span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s">."</span><span class="p">)</span>
+</code></pre></div></div> <p>By looking careful we can see how <code class="language-plaintext highlighter-rouge">click</code> deals with CLI arguments, which are passed to the function as parameters. This syntax based on decorators can be seen weird in the beginning but help us abstract those functionalities from the function to be defined. We can also appreciate the <code class="language-plaintext highlighter-rouge">click.echo</code> method, that will inform us of the finishing of the training process and the saving directory.</p> <p>Finally, we can declare the <code class="language-plaintext highlighter-rouge">predict</code> and <code class="language-plaintext highlighter-rouge">publish</code> commands and calling the <code class="language-plaintext highlighter-rouge">cli.add_command()</code> method to add these new functions to the CLI:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@click.command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">"predict"</span><span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span>
+    <span class="s">"--model"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">"fake-news-detector"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Model to use for prediction."</span>
+<span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span>
+    <span class="s">"--checkpoint"</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s">"distilbert-base-uncased-finetuned-sst-2-english"</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s">"Tokenizer used to tokenize the text."</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span><span class="s">"--text"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">"This is a fake news"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Text to predict."</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="nc">DetectorPipeline</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">checkpoint</span><span class="p">)</span>
+    <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">.</span><span class="nf">load_model_from_directory</span><span class="p">()</span>
+    <span class="n">prediction</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">click</span><span class="p">.</span><span class="nf">echo</span><span class="p">(</span><span class="sa">f</span><span class="s">"Prediction: </span><span class="si">{</span><span class="n">prediction</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="n">click</span><span class="p">.</span><span class="nf">echo</span><span class="p">(</span><span class="sa">f</span><span class="s">"Logits: </span><span class="si">{</span><span class="n">logits</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+
+<span class="nd">@click.command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">"publish"</span><span class="p">)</span>
+<span class="nd">@click.option</span><span class="p">(</span><span class="s">"--model"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">"fake-news-detector"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">"Model to publish."</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="nc">DetectorPipeline</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">pipeline</span><span class="p">.</span><span class="nf">publish_model_from_directory</span><span class="p">()</span>
+    <span class="n">click</span><span class="p">.</span><span class="nf">echo</span><span class="p">(</span><span class="s">"Model published into HuggingFace Hub."</span><span class="p">)</span>
+
+<span class="n">cli</span><span class="p">.</span><span class="nf">add_command</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+<span class="n">cli</span><span class="p">.</span><span class="nf">add_command</span><span class="p">(</span><span class="n">predict</span><span class="p">)</span>
+<span class="n">cli</span><span class="p">.</span><span class="nf">add_command</span><span class="p">(</span><span class="n">publish</span><span class="p">)</span>
+</code></pre></div></div> <p>Now whenever we want to interact with the model, we can simply run the <code class="language-plaintext highlighter-rouge">cli.py</code> file and use the different commands:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python cli.py train <span class="nt">--epochs</span> 1
+python cli.py predict <span class="nt">--text</span> <span class="s2">"This is a fake news"</span>
+python cli.py publish
+</code></pre></div></div> <h2 id="creating-a-rest-api">Creating a REST API</h2> <p>Having a CLI tool is great to work on your server or local machine, but it is not very convenient to use it in a production environment. Web or app teams should need to SSH to the server to run the commands, which will add a lot of complexity and delays in the communication, so it’s not a proper solution to serve predictions to the final user.</p> <p>For this reason, we will create a REST API that will allow us to interact with the model using HTTP requests. We will be using the <code class="language-plaintext highlighter-rouge">flask</code> library to create the API. The first step is to create a <code class="language-plaintext highlighter-rouge">app.py</code> file that will contain the code needed to run the server:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">render_template</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">from</span> <span class="n">detector</span> <span class="kn">import</span> <span class="n">DetectorPipeline</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">Flask</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="k">return</span> <span class="nf">render_template</span><span class="p">(</span><span class="s">"index.html"</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">app</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s">"0.0.0.0"</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+</code></pre></div></div> <p>This will create a simple Flask server on the port 5000 open for traffic access from every IP (<em>care with this in a real production environment!</em>) that will serve the <code class="language-plaintext highlighter-rouge">index.html</code> file when we access the root of the server. We will create this file in the <code class="language-plaintext highlighter-rouge">templates</code> folder:</p> <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;head&gt;</span>
+        <span class="nt">&lt;title&gt;</span>Fake news detector<span class="nt">&lt;/title&gt;</span>
+    <span class="nt">&lt;/head&gt;</span>
+    <span class="nt">&lt;body&gt;</span>
+        <span class="nt">&lt;h1&gt;</span>Powered by HuggingFace and PyTorch<span class="nt">&lt;/h1&gt;</span>
+        <span class="nt">&lt;p&gt;</span>This app is conceived to be used as an API REST, although this particular endpoint serves as an entrypoint where we can test the functionalities using a form.<span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;form</span> <span class="na">name=</span><span class="s">"input"</span> <span class="na">action=</span><span class="s">"/detect_html"</span> <span class="na">method=</span><span class="s">"post"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">"text"</span><span class="nt">&gt;</span>Text to detect:<span class="nt">&lt;/label&gt;</span>
+            <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">id=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"text"</span> <span class="na">value=</span><span class="s">"The president of the United States is Donald Trump."</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">value=</span><span class="s">"Submit"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/form&gt;</span>
+        
+    <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div> <p>The main functionality of our app will be to be used in a simulated production environment by serving HTTP requests, but it’s a good practice to serve also an index at route <code class="language-plaintext highlighter-rouge">/</code> to verify the correct functioning of the server. Furthermore, in this example we can use Jinja templates to pass parameters to the HTML file and render them in the browser. These parameters will be the result of the prediction and the logits, which will be passed to the template using the following function on the <code class="language-plaintext highlighter-rouge">app.py</code> file:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@app.route</span><span class="p">(</span><span class="s">"/detect_html"</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s">"POST"</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">detect_html</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">request</span><span class="p">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">"POST"</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">form</span><span class="p">[</span><span class="s">"text"</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="nf">inference</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nf">render_template</span><span class="p">(</span><span class="s">"index.html"</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+</code></pre></div></div> <figure> <picture> <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/html-interface?raw=true-480.webp"></source> <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/html-interface?raw=true-800.webp"></source> <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/html-interface?raw=true-1400.webp"></source> <img src="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/html-interface.png?raw=true" class="img-fluid rounded z-depth-1" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"> </picture> </figure> <p>Now that we have dealt with the HTML part of the server, we can create the endpoint that will be used to serve the predictions. We will create a <code class="language-plaintext highlighter-rouge">detect_json</code> function that will be called when we send a POST request to the <code class="language-plaintext highlighter-rouge">/detect_json</code> endpoint:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@app.route</span><span class="p">(</span><span class="s">"/detect_json"</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s">"POST"</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">detect_json</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">request</span><span class="p">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">"POST"</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">json</span><span class="p">[</span><span class="s">"text"</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="nf">inference</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nf">jsonify</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+</code></pre></div></div> <figure> <picture> <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/api-rest?raw=true-480.webp"></source> <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/api-rest?raw=true-800.webp"></source> <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/api-rest?raw=true-1400.webp"></source> <img src="https://github.com/josumsc/fake-news-detector/blob/master/docs/img/api-rest.png?raw=true" class="img-fluid rounded z-depth-1" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"> </picture> </figure> <p>To run our server and test the different endpoints, we can simply run the <code class="language-plaintext highlighter-rouge">app.py</code> file:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python app.py
+</code></pre></div></div> <h2 id="deploying-the-model-to-production">Deploying the model to production</h2> <p>We now have a proper API to serve predictions and a CLI command to train and publish the model, great! But, let’s imagine for a moment that our production team decides to change the server where the model is running. They would need to configure everything to run the flask API again, which would imply some downtime and a lot of work. Even if we prepare for this, sometimes a small change in the libraries installed in the server could mean a total failure of the API. For this reason, it is very important to have a proper deployment strategy to avoid these problems.</p> <p>The deployment strategy we will follow is based on using <strong>Docker</strong> as a containerization tool to create a container with all the dependencies and the code needed to run the API.</p> <blockquote> <p>In a real production environment, we could also add this container to a tool like <strong>Kubernetes</strong> to ensure high availability and scalability of the API, but as our API is very simple, we will not add this complexity to the example.</p> </blockquote> <p>To create this container, we will create a <code class="language-plaintext highlighter-rouge">Dockerfile</code> file that will contain the instructions to build the image:</p> <div class="language-dockerfile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">FROM</span><span class="s"> python:3.9</span>
+
+<span class="k">WORKDIR</span><span class="s"> /app</span>
+
+<span class="k">COPY</span><span class="s"> requirements.txt .</span>
+<span class="k">COPY</span><span class="s"> src/ .</span>
+
+<span class="k">RUN </span>apt-get update <span class="o">&amp;&amp;</span> apt-get <span class="nb">install</span> <span class="nt">-y</span> <span class="nt">--no-install-recommends</span> <span class="se">\
+</span>    build-essential <span class="se">\
+</span>    libpq-dev <span class="se">\
+</span>    <span class="o">&amp;&amp;</span> <span class="nb">rm</span> <span class="nt">-rf</span> /var/lib/apt/lists/<span class="k">*</span>
+<span class="k">RUN </span>pip <span class="nb">install</span> <span class="nt">--upgrade</span> pip <span class="o">&amp;&amp;</span> pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
+
+<span class="k">EXPOSE</span><span class="s"> 5000</span>
+<span class="k">ENTRYPOINT</span><span class="s"> ["python"]</span>
+<span class="k">CMD</span><span class="s"> ["app.py"]</span>
+</code></pre></div></div> <p>We can see how the <code class="language-plaintext highlighter-rouge">python:3.9</code> image is downloaded from Docker Hub and used as a base image to build our own image. Then, we copy the <code class="language-plaintext highlighter-rouge">requirements.txt</code> file and the <code class="language-plaintext highlighter-rouge">src</code> folder to the container and install the dependencies. Finally, we expose the port 5000 and set the <code class="language-plaintext highlighter-rouge">app.py</code> file as the entrypoint of the container. To build the image we can run the following command:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker build <span class="nt">-t</span> fake-news-detector <span class="nb">.</span>
+</code></pre></div></div> <p>Once our container is built we can share it with our production team and they will be able to run it without any problem. In the example of Docker Hub, publishing the container is as simple as running the following command:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker push fake-news-detector
+</code></pre></div></div> <p>Now we can run the container in our production server using the following command:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-p</span> 5001:5000 fake-news-detector
+</code></pre></div></div> <p>Or even better, use <code class="language-plaintext highlighter-rouge">docker-compose.yml</code> file to run the container with the rest of the services in case extra dependencies are added:</p> <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># docker-compose.yml</span>
+<span class="na">version</span><span class="pi">:</span> <span class="s2">"</span><span class="s">3.9"</span>
+<span class="na">services</span><span class="pi">:</span>
+  <span class="na">app</span><span class="pi">:</span>
+    <span class="na">build</span><span class="pi">:</span> <span class="s">.</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">5001:5000"</span>
+    <span class="na">restart</span><span class="pi">:</span>
+      <span class="s">always</span>
+</code></pre></div></div> <p>This way we can run and stop the container with the following commands:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker-compose <span class="nt">-f</span> docker-compose.yml up <span class="nt">-d</span> <span class="nt">--remove-orphans</span> <span class="nt">--build</span> <span class="nt">--force-recreate</span>
+docker-compose <span class="nt">-f</span> docker-compose.yml down
+</code></pre></div></div> <h2 id="extra-makefile">Extra: Makefile</h2> <p>We have everything we need now to train our model, create our API and share it with the world without thinking about compatibilities or requirements, and that’s a really good job done! But, we have skipped some important nuances of the MLOps cycle, such as linting the code or formatting, and we have left some manual steps that could be automated. For this reason, we will create a <code class="language-plaintext highlighter-rouge">Makefile</code> file to automate some of these tasks:</p> <div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Makefile
+</span><span class="nv">DOCKER_USERNAME</span> <span class="o">=</span> josumsc
+
+<span class="nl">install</span><span class="o">:</span>
+	pip <span class="nb">install</span> <span class="nt">--upgrade</span> pip <span class="o">&amp;&amp;</span><span class="se">\</span>
+		pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
+
+<span class="nl">format</span><span class="o">:</span>
+	black src/<span class="k">*</span>.py
+
+<span class="nl">lint</span><span class="o">:</span>
+	pylint <span class="nt">--disable</span><span class="o">=</span>R,C,W1203,E1101 src/.<span class="k">*</span>
+	docker run <span class="nt">--rm</span> <span class="nt">-i</span> hadolint/hadolint &lt; Dockerfile
+
+<span class="nl">publish</span><span class="o">:</span>
+	python src/cli.py publish
+	docker build <span class="nt">-t</span> <span class="p">$(</span>DOCKER_USERNAME<span class="p">)</span>/flask-fake-news:latest .
+	docker push <span class="p">$(</span>DOCKER_USERNAME<span class="p">)</span>/flask-fake-news:latest
+
+<span class="nl">run</span><span class="o">:</span>
+	docker-compose <span class="nt">-f</span> docker-compose.yml up <span class="nt">-d</span> <span class="nt">--remove-orphans</span> <span class="nt">--build</span> <span class="nt">--force-recreate</span>
+	<span class="p">@</span><span class="nb">echo</span> <span class="s2">"App deployed at http://localhost:5001"</span>
+
+<span class="nl">stop</span><span class="o">:</span>
+	docker-compose <span class="nt">-f</span> docker-compose.yml down
+</code></pre></div></div> <p>We can see how we have added some commands to install the dependencies, format the code, lint the code and Dockerfile, publish the model and run the container. We can run these commands with the following command:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make &lt;<span class="nb">command</span><span class="o">&gt;</span>
+</code></pre></div></div> <h2 id="conclusion">Conclusion</h2> <p>By following the steps in this article, we have created a simple API to serve predictions and a CLI command to train and publish the model. We have also created a Dockerfile to build a container that automatically serves our API. Finally, we have created a Makefile to automate some of the tasks and make the development process easier.</p> <p>NLP and MLOps are 2 concepts that the modern Machine Learning Engineer should master to make the most of machine learning applications. Fortunately, the most groundbreaking tools are also open source, so we can read their documentation and use them to create powerful applications as the one shown in this article.</p> <p>I hope that this was useful to some of you, have fun and happy coding!</p> <blockquote> <p>As next step, we could create a GitHub Actions pipeline to automatically publish the model in Docker whenever we push to master, but as we have seen, the process is very simple and we can do it manually without any problem. In case your project expects to have a long lifetime, please do consider adding a CI/CD pipeline to automate the process by <a href="https://docs.github.com/en/actions/publishing-packages/publishing-docker-images#publishing-images-to-docker-hub" rel="external nofollow noopener" target="_blank">following the steps here</a>.</p> </blockquote> <h2 id="references">References</h2> <ul> <li><a href="https://huggingface.co/transformers/index.html" rel="external nofollow noopener" target="_blank">HuggingFace Transformers</a></li> <li><a href="https://learning.oreilly.com/library/view/natural-language-processing/9781098136789/" rel="external nofollow noopener" target="_blank">Natural Language Processing with Transformers Revised Edition</a></li> <li><a href="https://learning.oreilly.com/library/view/deploy-machine-learning/9781484265468/" rel="external nofollow noopener" target="_blank">Deploy Machine Learning Models to Production: With Flask, Streamlit, Docker, and Kubernetes on Google Cloud Platform</a></li> <li><a href="https://www.coursera.org/learn/open-source-mlops-platforms-duke/home/week/1" rel="external nofollow noopener" target="_blank">Open Source Platforms for MLOps</a></li> </ul> </article><div id="giscus_thread" style="max-width: 800px; margin: 0 auto;"> <script>let giscusTheme=localStorage.getItem("theme"),giscusAttributes={src:"https://giscus.app/client.js","data-repo":"josumsc/josumsc.github.io","data-repo-id":"R_kgDOIyNXzw","data-category":"Announcements","data-category-id":"DIC_kwDOIyNXz84CTnxY","data-mapping":"title","data-strict":"1","data-reactions-enabled":"1","data-emit-metadata":"0","data-input-position":"bottom","data-theme":giscusTheme,"data-lang":"en",crossorigin:"anonymous",async:""},giscusScript=document.createElement("script");Object.entries(giscusAttributes).forEach(([t,e])=>giscusScript.setAttribute(t,e)),document.getElementById("giscus_thread").appendChild(giscusScript);</script> <noscript>Please enable JavaScript to view the <a href="http://giscus.app/?ref_noscript" rel="external nofollow noopener" target="_blank">comments powered by giscus.</a> </noscript> </div> </div> </div> <footer class="fixed-bottom"> <div class="container mt-0"> © Copyright 2023 Josu Alonso Castanedo. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. </div> </footer> <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha256-fgLAgv7fyCGopR/gBNq2iW3ZKIdqIcyshnUULC4vex8=" crossorigin="anonymous"></script> <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@4/imagesloaded.pkgd.min.js"></script> <script defer src="/assets/js/masonry.js" type="text/javascript"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js" integrity="sha256-7PhEpEWEW0XXQ0k6kQrPKwuoIomz8R8IYyuU1Qew4P8=" crossorigin="anonymous"></script> <script defer src="/assets/js/zoom.js"></script> <script defer src="/assets/js/common.js"></script> <script async src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script> <script async src="https://badge.dimensions.ai/badge.js"></script> <script type="text/javascript">window.MathJax={tex:{tags:"ams"}};</script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script> <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script> <script type="text/javascript">function progressBarSetup(){"max"in document.createElement("progress")?(initializeProgressElement(),$(document).on("scroll",function(){progressBar.attr({value:getCurrentScrollPosition()})}),$(window).on("resize",initializeProgressElement)):(resizeProgressBar(),$(document).on("scroll",resizeProgressBar),$(window).on("resize",resizeProgressBar))}function getCurrentScrollPosition(){return $(window).scrollTop()}function initializeProgressElement(){let e=$("#navbar").outerHeight(!0);$("body").css({"padding-top":e}),$("progress-container").css({"padding-top":e}),progressBar.css({top:e}),progressBar.attr({max:getDistanceToScroll(),value:getCurrentScrollPosition()})}function getDistanceToScroll(){return $(document).height()-$(window).height()}function resizeProgressBar(){progressBar.css({width:getWidthPercentage()+"%"})}function getWidthPercentage(){return getCurrentScrollPosition()/getDistanceToScroll()*100}const progressBar=$("#progress");window.onload=function(){setTimeout(progressBarSetup,50)};</script> </body> </html>
