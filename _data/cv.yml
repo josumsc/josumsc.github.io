@@ -8,28 +8,6 @@
     - name: Languages
       value: Spanish, English, French
 
-- title: Education
-  type: time_table
-  contents:
-    - title: Master in Data Science
-      institution: Open University of Catalonia, Barcelona, Spain
-      year: 2020-2022
-      description:
-        - Specialized in Machine Learning and Deep Learning.
-        - Top 150 between youngest universities (Times Higher Education).
-    - title: IBBA in International Finance
-      institution: Kedge Business School, Marseille, France
-      year: 2015-2018
-      description:
-        - Specialized in Financial Analysis and Econometrics.
-        - Classified one of the 40 best Business Schools in Europe (Financial Times).
-    - title: Double Degree Program in International Business
-      institution: Universitat de Valencia, Valencia, Spain
-      year: 2013-2018
-      description:
-        - Joint Degree Program with KEDGE BS.
-        - 3rd best Economic and Management faculty in Spain (Ranking Shangai).
-
 - title: Experience
   type: time_table
   contents:
@@ -69,6 +47,28 @@
       description:
         - "Ensure a proper treatment of the financial data."
         - "Elaborate management reports: payment methods, cash available, refunds, ..."
+
+- title: Education
+  type: time_table
+  contents:
+    - title: Master in Data Science
+      institution: Open University of Catalonia, Barcelona, Spain
+      year: 2020-2022
+      description:
+        - Specialized in Machine Learning and Deep Learning.
+        - Top 150 between youngest universities (Times Higher Education).
+    - title: IBBA in International Finance
+      institution: Kedge Business School, Marseille, France
+      year: 2015-2018
+      description:
+        - Specialized in Financial Analysis and Econometrics.
+        - Classified one of the 40 best Business Schools in Europe (Financial Times).
+    - title: Double Degree Program in International Business
+      institution: Universitat de Valencia, Valencia, Spain
+      year: 2013-2018
+      description:
+        - Joint Degree Program with KEDGE BS.
+        - 3rd best Economic and Management faculty in Spain (Ranking Shangai).
 
 - title: Skills & Tools
   type: nested_list
